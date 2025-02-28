@@ -16,9 +16,9 @@ export class UserController {
         return this.userService.create(createUserDto);
     }
 
-    @UseGuards(JwtAuthGuard)
-    @Get('me')
-    me(@Req() req:Request){
-        return {user:req.user}
-    }
+    // @UseGuards(JwtAuthGuard)
+    // @Get('me')
+    // me(@Req() req:Request){
+    //     return {user:req.user}
+    // }
 }
