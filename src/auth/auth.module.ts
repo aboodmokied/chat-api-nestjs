@@ -13,7 +13,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     JwtModule.register({
       secret:'abood',
       signOptions:{
-        expiresIn:'5m'
+        expiresIn:'1h'
       }
     }),
     UserModule,

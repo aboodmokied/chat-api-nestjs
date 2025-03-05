@@ -6,7 +6,7 @@ import { User } from 'src/schemas/User';
 import { UserService } from 'src/user/user.service';
 import * as bcrypt from 'bcryptjs';
 export type AuthPayload={
-    sub:number,
+    sub:string,
     name:string,
     roles:Roles[]
 };

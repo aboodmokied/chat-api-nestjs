@@ -1,7 +1,11 @@
-import { OnGatewayConnection, OnGatewayDisconnect, SubscribeMessage, WebSocketGateway, WebSocketServer } from "@nestjs/websockets";
+import { ConnectedSocket, MessageBody, OnGatewayConnection, OnGatewayDisconnect, SubscribeMessage, WebSocketGateway, WebSocketServer } from "@nestjs/websockets";
 import { Server, Socket } from "socket.io";
+import { AuthorizedSoket } from "src/types";
+import { ChatService } from "./chat.service";
+
 
 @WebSocketGateway({
+    // namespace:'chat',
     cors: {
         origin: '*', // Allow all origins
         methods: ['GET', 'POST'], // Specify allowed methods
@@ -9,19 +13,26 @@ import { Server, Socket } from "socket.io";
       },
 })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
+    private activeUsers=new Map<string,string>(); // userId -> socketId
     @WebSocketServer()
     private server:Server;
-    constructor(){}
+    constructor(private chatService:ChatService){}
     // inhereted listeners
-    handleConnection(client: Socket) {
+    async handleConnection(client: AuthorizedSoket) {
         console.log('Client Connected:',client.id);
+        // add it to active users
+        this.activeUsers.set(client.userId,client.id);
+        // get its rooms
+        const userRooms=await this.chatService.userChats(client.userId); 
+        // join to them
+        client.join(userRooms); 
         this.server.emit('userConnected',`User Connected: ${client.id}`);
     }
-    handleDisconnect(client: Socket) {
-        console.log('Client Connected:',client.id);
+    handleDisconnect(client: AuthorizedSoket) {
+        this.activeUsers.delete(client.userId);
         this.server.emit('userDisconnected',`User Disconnected: ${client.id}`);
     }
-    
+
     // custom listeners
     @SubscribeMessage('message')
     async handleMessage(client:Socket,{message}){
@@ -31,4 +42,26 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         client.broadcast.emit('message',`Message: ${message}, From: ${client.id}`);
     }
 
+    // TODO: validate if the sender is a member in the room
+    @SubscribeMessage('privateMessage')
+    async handlePrivateMessage(client:Socket,{room,message}){
+        this.server.to(room).emit('message',`Message: ${message}, From: ${client.id}`);
+    }
+
+    // join a room listener
+    @SubscribeMessage('joinChat')
+    async handlePrivateChat(@ConnectedSocket() client:Socket,@MessageBody() data:{senderId:string,recieverID:string}){
+        const {senderId,recieverID}=data;
+        const roomName=await this.chatService.joinChat(senderId,recieverID);
+        // join the current user to this new chat
+        client.join(roomName);
+        // get the second user socket if its connected (using recieverID), and join it to this chat
+        const recieverSocketId=this.activeUsers.get(recieverID);
+        if(recieverSocketId){ // if the user active
+            const recieverSocket=this.server.sockets.sockets.get(recieverSocketId);
+            recieverSocket?.join(roomName);
+        }
+        this.server.to(roomName).emit('newChat',{room:roomName,users:[senderId,recieverID]});
+    }
 };
+

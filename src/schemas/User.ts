@@ -20,6 +20,9 @@ export class User extends Document {
     
     @Prop({default:[Roles.User]})
     roles:Roles[]
+
+    @Prop({default:0})
+    customId:number
 };
 
 export const UserSchema=SchemaFactory.createForClass(User);
