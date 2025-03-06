@@ -20,10 +20,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     // inhereted listeners
     async handleConnection(client: AuthorizedSoket) {
         console.log('Client Connected:',client.id);
+        await this.chatService.userChats(client.userId);
         // add it to active users
         this.activeUsers.set(client.userId,client.id);
         // get its rooms
-        const userRooms=await this.chatService.userChats(client.userId); 
+        const userRooms=await this.chatService.userRooms(client.userId); 
         // join to them
         client.join(userRooms); 
         this.server.emit('userConnected',`User Connected: ${client.id}`);
@@ -63,5 +64,12 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         }
         this.server.to(roomName).emit('newChat',{room:roomName,users:[senderId,recieverID]});
     }
+
+    @SubscribeMessage('myChats')
+    async handlerMyChats(client:AuthorizedSoket){
+        const chats=await this.chatService.userChats(client.userId);
+        this.server.to(client.id).emit('myChats',{chats});
+    }
+
 };
 

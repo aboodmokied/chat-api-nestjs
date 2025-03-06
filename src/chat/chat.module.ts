@@ -2,10 +2,10 @@ import { Module } from '@nestjs/common';
 import { ChatGateway } from './chat.gateway';
 import { ChatService } from './chat.service';
 import { MongooseModule } from '@nestjs/mongoose';
-import { Room, RoomSchema } from 'src/schemas/Room';
+import { Chat, ChatSchema } from 'src/schemas/Chat';
 
 @Module({
-    imports:[MongooseModule.forFeature([{name:Room.name,schema:RoomSchema}])],
+    imports:[MongooseModule.forFeature([{name:Chat.name,schema:ChatSchema}])],
     controllers:[],
     providers:[ChatGateway, ChatService],
 })
