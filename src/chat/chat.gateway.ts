@@ -2,8 +2,9 @@ import { ConnectedSocket, MessageBody, OnGatewayConnection, OnGatewayDisconnect,
 import { Server, Socket } from "socket.io";
 import { AuthorizedSoket } from "src/types";
 import { ChatService } from "./chat.service";
-import { UseGuards } from "@nestjs/common";
+import { UseGuards, ValidationPipe } from "@nestjs/common";
 import { ChatMemberGuard } from "./guards/chat-member.guard";
+import { ChatOperationsDto, SendMessageDto } from "./dto/chat.dto";
 
 
 @WebSocketGateway({
@@ -70,7 +71,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     // validate if the sender is a member in the chat
     @UseGuards(ChatMemberGuard(ChatGateway.connectedUserChats))
     @SubscribeMessage('privateMessage')
-    async handlePrivateMessage(client:AuthorizedSoket,{chatId,message}){
+    async handlePrivateMessage(@ConnectedSocket() client:AuthorizedSoket,@MessageBody(new ValidationPipe({whitelist:true})) {chatId,message}:SendMessageDto){
         console.log('New Message',message);
         this.chatService.newMessage(chatId,message);
         const chat=await this.chatService.getChat(chatId);
@@ -95,7 +96,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     // validate if the user is a member in the chat
     @UseGuards(ChatMemberGuard(ChatGateway.connectedUserChats))
     @SubscribeMessage('markAsOpenedMessages')
-    handleMarkAsOpenedMessages(client:AuthorizedSoket,{chatId}){
+    handleMarkAsOpenedMessages(client:AuthorizedSoket,@MessageBody(new ValidationPipe({whitelist:true})) {chatId}:ChatOperationsDto){
         this.chatService.markAsOpenedMessages(client.userId,chatId);
     }
 
