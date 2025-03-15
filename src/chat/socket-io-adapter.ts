@@ -1,6 +1,7 @@
 import { INestApplicationContext, UnauthorizedException } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { IoAdapter } from "@nestjs/platform-socket.io";
+import { WsException } from "@nestjs/websockets";
 import { Server } from "socket.io";
 import { AuthPayload } from "src/auth/auth.service";
 import { AuthorizedSoket } from "src/types";
@@ -26,6 +27,6 @@ const authorizeSocketMiddleware=(jwtService:JwtService)=>(client:AuthorizedSoket
         return next();        
     } catch (error) {
         console.log('Unauthorized Socket');
-        // throw new UnauthorizedException('Unauthorized Socket');
+        next(new UnauthorizedException('Unauthorized Socket'))
     }
 };

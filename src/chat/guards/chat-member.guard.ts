@@ -1,4 +1,5 @@
-import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from "@nestjs/common";
+import { CanActivate, ExecutionContext, Injectable } from "@nestjs/common";
+import { WsException } from "@nestjs/websockets";
 import { AuthorizedSoket } from "src/types";
 
 export const ChatMemberGuard=(usersChats)=>{
@@ -10,8 +11,7 @@ export const ChatMemberGuard=(usersChats)=>{
             const userChats=usersChats.get(client.userId);
             if(!userChats || !userChats.has(data.chatId)){
                 console.log('You are not a member in this chat');
-                return false;
-                // throw new ForbiddenException('You are not a member in this chat')
+                // throw new WsException('You are not a member in this chat')
             }
             return true;
         }

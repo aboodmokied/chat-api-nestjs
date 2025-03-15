@@ -8,6 +8,18 @@ export class SendMessageDto{
     @IsString()
     @IsNotEmpty()
     chatId:string;
+    @IsString()
+    @IsNotEmpty()
+    recieverId:string
+    
+}
+export class JoinChatDto{
+    @IsString()
+    @IsNotEmpty()
+    senderId:string
+    @IsString()
+    @IsNotEmpty()
+    recieverId:string
 }
 
 export class ChatOperationsDto extends PickType(SendMessageDto,['chatId']){};

@@ -6,13 +6,13 @@ import { Request } from 'express';
 
 @Controller('user')
 export class UserController {
-    constructor(private readonly userService:UserService){}
+constructor(private readonly userService:UserService){}
     @Get()
     async findAll(){
         return this.userService.findAll();
     }
     @Post()
-    async create(@Body(ValidationPipe) createUserDto:CreateUserDto){
+    async create(@Body() createUserDto:CreateUserDto){
         return this.userService.create(createUserDto);
     }
 

@@ -1,10 +1,12 @@
-import { ConnectedSocket, MessageBody, OnGatewayConnection, OnGatewayDisconnect, SubscribeMessage, WebSocketGateway, WebSocketServer } from "@nestjs/websockets";
+import { ConnectedSocket, MessageBody, OnGatewayConnection, OnGatewayDisconnect, SubscribeMessage, WebSocketGateway, WebSocketServer, WsException } from "@nestjs/websockets";
 import { Server, Socket } from "socket.io";
 import { AuthorizedSoket } from "src/types";
 import { ChatService } from "./chat.service";
-import { UseGuards, ValidationPipe } from "@nestjs/common";
+import { UseFilters, UseGuards, ValidationPipe } from "@nestjs/common";
 import { ChatMemberGuard } from "./guards/chat-member.guard";
-import { ChatOperationsDto, SendMessageDto } from "./dto/chat.dto";
+import { ChatOperationsDto, JoinChatDto, SendMessageDto } from "./dto/chat.dto";
+import { AllExceptionsFilter } from "src/filters/all-exceptions.filter";
+import { WsExceptionsFilter } from "src/filters/ws-exceptions.filter";
 
 
 @WebSocketGateway({
@@ -15,6 +17,7 @@ import { ChatOperationsDto, SendMessageDto } from "./dto/chat.dto";
         credentials: true, // Include credentials if needed
       },
 })
+@UseFilters(new WsExceptionsFilter())
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private activeUsers=new Map<string,string>(); // userId -> socketId
     static connectedUserChats=new Map<string,Set<string>>(); // userId -> [user chats Ids]
@@ -50,30 +53,30 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     // join a room listener
     @SubscribeMessage('joinChat')
-    async handlePrivateChat(@ConnectedSocket() client:Socket,@MessageBody() data:{senderId:string,recieverID:string}){
-        const {senderId,recieverID}=data;
-        const chat=await this.chatService.joinChat(senderId,recieverID);
+    async handlePrivateChat(@ConnectedSocket() client:Socket,@MessageBody(new ValidationPipe({whitelist:true})) data:JoinChatDto){
+        const {senderId,recieverId}=data;
+        const chat=await this.chatService.joinChat(senderId,recieverId);
         // join the current user to this new chat
         client.join(chat.room);
         // update sender chats in activeUserChats map
         this.updateConnectedUserChats(senderId);
         // get the second user socket if its connected (using recieverID), and join it to this chat
-        const recieverSocketId=this.activeUsers.get(recieverID);
+        const recieverSocketId=this.activeUsers.get(recieverId);
         if(recieverSocketId){ // if the user active
             const recieverSocket=this.server.sockets.sockets.get(recieverSocketId);
             recieverSocket?.join(chat.room);
             // update reciever chats in activeUserChats map
-            this.updateConnectedUserChats(recieverID);
+            this.updateConnectedUserChats(recieverId);
         }
-        this.server.to(chat.room).emit('newChat',{chatId:chat,users:[senderId,recieverID]});
+        this.server.to(chat.room).emit('newChat',{chatId:chat,users:[senderId,recieverId]});
     }
 
     // validate if the sender is a member in the chat
     @UseGuards(ChatMemberGuard(ChatGateway.connectedUserChats))
     @SubscribeMessage('privateMessage')
-    async handlePrivateMessage(@ConnectedSocket() client:AuthorizedSoket,@MessageBody(new ValidationPipe({whitelist:true})) {chatId,message}:SendMessageDto){
+    async handlePrivateMessage(@ConnectedSocket() client:AuthorizedSoket,@MessageBody(new ValidationPipe({whitelist:true})) {chatId,message,recieverId}:SendMessageDto){
         console.log('New Message',message);
-        this.chatService.newMessage(chatId,message);
+        this.chatService.newMessage(chatId,message,client.userId,recieverId);
         const chat=await this.chatService.getChat(chatId);
         this.server.to(chat!.room).emit('message',`Message: ${message}, From: ${client.id}`);
     }

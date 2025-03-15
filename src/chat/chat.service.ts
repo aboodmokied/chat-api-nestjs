@@ -37,12 +37,12 @@ export class ChatService {
         return chats.map(chat=>chat.id as string)
     }
 
-    async newMessage(chatId:string,message:string){
+    async newMessage(chatId:string,message:string,senderId:string,recieverId:string){
         return this.messageModel.create({
             content:message,
             chatId,
-            sender:0,
-            reciever:0,
+            sender:senderId,
+            reciever:recieverId,
         })
     }
     async chatMessages(chatId:string,page=1,limit=50){
