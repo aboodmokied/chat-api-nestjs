@@ -9,6 +9,7 @@ import { SeederModule } from './seeder/seeder.module';
 import { SeederService } from './seeder/seeder.service';
 import { ChatModule } from './chat/chat.module';
 import { SuperAdminModule } from './super-admin/super-admin.module';
+import { AdminRegisterModule } from './admin-register/admin-register.module';
 
 @Module({
   imports: [
@@ -18,7 +19,8 @@ import { SuperAdminModule } from './super-admin/super-admin.module';
     RolesModule,
     SeederModule,
     ChatModule,
-    SuperAdminModule
+    SuperAdminModule,
+    AdminRegisterModule
   ],
   controllers: [AppController],
   providers: [AppService],

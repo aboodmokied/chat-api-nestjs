@@ -4,6 +4,7 @@ import { Model } from 'mongoose';
 import { User } from 'src/schemas/User';
 import { CreateUserDto } from './dto/create-user.dto';
 import * as bcrypt from 'bcryptjs';
+import { Roles } from 'src/roles/roles.enum';
 
 @Injectable()
 export class UserService {
@@ -16,6 +17,9 @@ export class UserService {
     async create(createUserDto:CreateUserDto):Promise<User>{
         createUserDto.password=await bcrypt.hash(createUserDto.password,10);
         return this.userModel.create(createUserDto);
+    }
+    async createAdminDirectly(createUserDto:CreateUserDto):Promise<User>{
+        return this.userModel.create({...createUserDto,roles:[Roles.Admin]});
     }
 
     async findByEmail(email:string):Promise<User|null>{

@@ -12,7 +12,7 @@ constructor(private readonly userService:UserService){}
         return this.userService.findAll();
     }
     @Post()
-    async create(@Body() createUserDto:CreateUserDto){
+    async create(@Body(new ValidationPipe({whitelist:true})) createUserDto:CreateUserDto){
         return this.userService.create(createUserDto);
     }
 
