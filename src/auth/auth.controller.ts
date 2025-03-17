@@ -15,11 +15,10 @@ export class AuthController {
     @UseGuards(LocalAuthGuard)
     @Post('login')
     login(@Req() req:Request){
-        throw new ForbiddenException()
         return this.authService.generateJwtToken(req.user as User);    
     }
 
-    @RolesDecorator(Roles.Admin,Roles.User)
+    @RolesDecorator(Roles.Admin)
     @UseGuards(JwtAuthGuard,RolesGuard)
     @Get('me')
     me(@Req() req:Request){

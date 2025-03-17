@@ -15,7 +15,7 @@ export class SeederService {
                 email:'admin@gmail.com',
                 name:'admin',
                 password:bcrypt.hashSync('197508a',10),
-                roles:[Roles.Admin]
+                roles:[Roles.Super_Admin]
             });
         }
     }

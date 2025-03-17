@@ -8,6 +8,7 @@ import { RolesModule } from './roles/roles.module';
 import { SeederModule } from './seeder/seeder.module';
 import { SeederService } from './seeder/seeder.service';
 import { ChatModule } from './chat/chat.module';
+import { SuperAdminModule } from './super-admin/super-admin.module';
 
 @Module({
   imports: [
@@ -16,7 +17,8 @@ import { ChatModule } from './chat/chat.module';
     AuthModule,
     RolesModule,
     SeederModule,
-    ChatModule
+    ChatModule,
+    SuperAdminModule
   ],
   controllers: [AppController],
   providers: [AppService],
