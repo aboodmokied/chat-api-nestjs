@@ -10,17 +10,19 @@ import { SeederService } from './seeder/seeder.service';
 import { ChatModule } from './chat/chat.module';
 import { SuperAdminModule } from './super-admin/super-admin.module';
 import { AdminRegisterModule } from './admin-register/admin-register.module';
+import { AccessToken, AccessTokenSchema } from './schemas/AccessToken';
 
 @Module({
   imports: [
     MongooseModule.forRoot('mongodb://localhost:27017/chat'),
+    // MongooseModule.forFeature([{name:AccessToken.name,schema:AccessTokenSchema}]),
     UserModule,
     AuthModule,
     RolesModule,
     SeederModule,
     ChatModule,
     SuperAdminModule,
-    AdminRegisterModule
+    AdminRegisterModule,
   ],
   controllers: [AppController],
   providers: [AppService],

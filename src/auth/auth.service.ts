@@ -5,6 +5,9 @@ import { Roles } from 'src/roles/roles.enum';
 import { User } from 'src/schemas/User';
 import { UserService } from 'src/user/user.service';
 import * as bcrypt from 'bcryptjs';
+import { InjectModel } from '@nestjs/mongoose';
+import { AccessToken } from 'src/schemas/AccessToken';
+import { Model } from 'mongoose';
 export type AuthPayload={
     sub:string,
     name:string,
@@ -13,7 +16,7 @@ export type AuthPayload={
 
 @Injectable()
 export class AuthService {
-    constructor(private jwtService:JwtService,private userService:UserService){}
+    constructor(@InjectModel(AccessToken.name) private tokenModel:Model<AccessToken>,private jwtService:JwtService,private userService:UserService){}
     async validateUser(email:string,password:string){
         const user=await this.userService.findByEmail(email);
         if(user && bcrypt.compareSync(password,user.password)){
@@ -28,6 +31,26 @@ export class AuthService {
             roles:user.roles
         }
         const accessToken=this.jwtService.sign(payload);
+        await this.tokenModel.create({
+            token:accessToken,
+            user:user.id
+        })
         return {accessToken};
+    }
+
+    async isValidTokenWithUser(token:string){
+        const tokenRecord=await this.tokenModel.findOne({token,revoked:false});
+        if(tokenRecord){
+            const payload:AuthPayload=this.jwtService.verify(tokenRecord.token);
+            const user=await this.userService.getById(payload.sub);
+            if(user){
+                return user;
+            }
+        }
+        return null;
+    }
+
+    logout(token:string){
+        return this.tokenModel.updateMany({token},{revoked:true});
     }
 }

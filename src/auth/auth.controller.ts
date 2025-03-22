@@ -1,5 +1,5 @@
-import { Controller, ForbiddenException, Get, Post, Req, UseGuards } from '@nestjs/common';
-import { Request } from 'express';
+import { Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { User } from 'src/schemas/User';
@@ -18,7 +18,15 @@ export class AuthController {
         return this.authService.generateJwtToken(req.user as User);    
     }
 
-    @RolesDecorator(Roles.Admin)
+    @UseGuards(JwtAuthGuard)
+    @Get('logout')
+    async logout(@Req() req:Request,@Res() res:Response){
+        const token=req.headers.authorization?.split(' ')[1];
+        await this.authService.logout(token!);
+        return res.sendStatus(204);   
+    }
+
+    @RolesDecorator(Roles.User)
     @UseGuards(JwtAuthGuard,RolesGuard)
     @Get('me')
     me(@Req() req:Request){
