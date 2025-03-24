@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
 import { Roles } from 'src/roles/roles.enum';
@@ -41,10 +41,14 @@ export class AuthService {
     async isValidTokenWithUser(token:string){
         const tokenRecord=await this.tokenModel.findOne({token,revoked:false});
         if(tokenRecord){
-            const payload:AuthPayload=this.jwtService.verify(tokenRecord.token);
-            const user=await this.userService.getById(payload.sub);
-            if(user){
-                return user;
+            try {
+                const payload:AuthPayload=this.jwtService.verify(tokenRecord.token);
+                const user=await this.userService.getById(payload.sub);
+                if(user){
+                    return user;
+                }
+            } catch (error) {
+                throw new UnauthorizedException(error.message||'Unauthorized')
             }
         }
         return null;

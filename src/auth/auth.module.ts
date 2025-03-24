@@ -9,15 +9,26 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { AccessToken, AccessTokenSchema } from 'src/schemas/AccessToken';
 import { MongooseModule } from '@nestjs/mongoose';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
-
+import { ConfigModule, ConfigService } from '@nestjs/config';
+ 
 @Module({
   imports:[
     PassportModule,
-    JwtModule.register({
-      secret:'abood',
-      signOptions:{
-        expiresIn:'1h'
-      }
+    // JwtModule.register({
+    //   secret:process.env.JWT_SECRET,
+    //   signOptions:{
+    //     expiresIn:process.env.JWT_EXPIRATION
+    //   }
+    // }),
+    JwtModule.registerAsync({
+      imports:[ConfigModule],
+      useFactory:async(configService:ConfigService)=>({
+        secret:configService.get<string>('JWT_SECRET'),
+        signOptions:{
+          expiresIn:configService.get<string>('JWT_EXPIRATION'),
+        },
+      }),
+      inject:[ConfigService]
     }),
     UserModule,
     MongooseModule.forFeature([{name:AccessToken.name,schema:AccessTokenSchema}]),

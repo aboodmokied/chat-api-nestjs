@@ -10,12 +10,20 @@ import { SeederService } from './seeder/seeder.service';
 import { ChatModule } from './chat/chat.module';
 import { SuperAdminModule } from './super-admin/super-admin.module';
 import { AdminRegisterModule } from './admin-register/admin-register.module';
-import { AccessToken, AccessTokenSchema } from './schemas/AccessToken';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 
 @Module({
   imports: [
-    MongooseModule.forRoot('mongodb://localhost:27017/chat'),
-    // MongooseModule.forFeature([{name:AccessToken.name,schema:AccessTokenSchema}]),
+    MongooseModule.forRootAsync({
+      imports:[ConfigModule],
+      useFactory:async(configService:ConfigService)=>({
+        uri:configService.get<string>('DB_URI')
+      }),
+      inject:[ConfigService]
+    }),
+    ConfigModule.forRoot({
+      isGlobal:true
+    }),
     UserModule,
     AuthModule,
     RolesModule,
