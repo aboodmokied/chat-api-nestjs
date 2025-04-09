@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { count } from 'console';
 import { Model } from 'mongoose';
 import { Chat } from 'src/schemas/Chat';
 import { Message } from 'src/schemas/Message';
@@ -46,14 +47,14 @@ export class ChatService {
         })
     }
     async chatMessages(chatId:string,page=1,limit=50){
-        return this.messageModel.find({chatId})
-        .sort({timestamp:-1}) // get latest messages
+        return this.messageModel.find({chatId,opened:false})
+        .sort({timestamp:1}) // get oldest messages
         .skip((page-1) * limit) // pagination
         .limit(limit)
         .lean();
     }
 
-    async markAsOpenedMessages(userId:string,chatId:string){
-        return this.messageModel.updateMany({reciever:userId,chatId,opened:false},{opened:true});
+    async markAsOpenedMessage(userId:string,chatId:string,messageId:string){
+        return this.messageModel.updateMany({id:messageId,reciever:userId,chatId,opened:false},{opened:true});
     }
 }
