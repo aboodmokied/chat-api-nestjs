@@ -33,4 +33,5 @@ export class UserService {
         const user=await this.userModel.findById(id);
         return user;
     }
+    
 }

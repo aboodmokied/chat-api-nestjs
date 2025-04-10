@@ -68,16 +68,16 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
             // update reciever chats in activeUserChats map
             this.updateConnectedUserChats(recieverId);
         }
-        this.server.to(chat.room).emit('newChat',{chatId:chat,users:[senderId,recieverId]});
+        this.server.to(chat.room).emit('newChat',{chatId:chat.id,users:[senderId,recieverId]});
     }
 
     // validate if the sender is a member in the chat
     @UseGuards(ChatMemberGuard(ChatGateway.connectedUserChats))
     @SubscribeMessage('privateMessage')
     async handlePrivateMessage(@ConnectedSocket() client:AuthorizedSoket,@MessageBody(new ValidationPipe({whitelist:true})) {chatId,message,recieverId}:SendMessageDto){
-        this.chatService.newMessage(chatId,message,client.userId,recieverId);
+        const newMessage=await this.chatService.newMessage(chatId,message,client.userId,recieverId);
         const chat=await this.chatService.getChat(chatId);
-        this.server.to(chat!.room).emit('message',`Message: ${message}, From: ${client.id}`);
+        this.server.to(chat!.room).emit('newMessage',{message:newMessage});
     }
 
     
@@ -95,14 +95,14 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         this.server.to(client.id).emit('chatMessages',{chatId,messages});
     }
 
-    // validate if the user is a member in the chat
-    // this event should emited when user opens a specific chat 
-    @UseGuards(ChatMemberGuard(ChatGateway.connectedUserChats))
-    @SubscribeMessage('chatNewMessages')
-    async handleChatNewMessages(client:AuthorizedSoket,{chatId,page,limit}){
-        const messages=await this.chatService.chatMessages(chatId,page,limit);
-        this.server.to(client.id).emit('chatMessages',{chatId,messages});
-    }
+    // // validate if the user is a member in the chat
+    // // this event should emited when user opens a specific chat 
+    // @UseGuards(ChatMemberGuard(ChatGateway.connectedUserChats))
+    // @SubscribeMessage('chatNewMessages')
+    // async handleChatNewMessages(client:AuthorizedSoket,{chatId,page,limit}){
+    //     const messages=await this.chatService.chatMessages(chatId,page,limit);
+    //     this.server.to(client.id).emit('chatMessages',{chatId,messages});
+    // }
 
     // validate if the user is a member in the chat
     @UseGuards(ChatMemberGuard(ChatGateway.connectedUserChats))
@@ -110,7 +110,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     async handleMarkAsOpenedMessage(client:AuthorizedSoket,@MessageBody() {chatId,messageId}){
         this.chatService.markAsOpenedMessage(client.userId,chatId,messageId);
         const chat=await this.chatService.getChat(chatId);
-        this.server.to(chat!.room).emit('messageSeen',{chatId,messageId});
+        this.server.to(chat!.room).emit('messageOpened',{chatId,messageId});
     }
 
 };

@@ -6,7 +6,6 @@ import { Roles } from 'src/roles/roles.enum';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/roles/guards/roles.guard';
 
-
 @Controller('admin-register')
 export class AdminRegisterController {
     constructor(private readonly adminRegisterService:AdminRegisterService){}

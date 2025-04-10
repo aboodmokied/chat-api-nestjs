@@ -16,9 +16,9 @@ constructor(private readonly userService:UserService){}
         return this.userService.create(createUserDto);
     }
 
-    // @UseGuards(JwtAuthGuard)
-    // @Get('me')
-    // me(@Req() req:Request){
-    //     return {user:req.user}
-    // }
+    @UseGuards(JwtAuthGuard)
+    @Get('me')
+    me(@Req() req){
+        return this.userService.getById(req.user.id)
+    }
 }
