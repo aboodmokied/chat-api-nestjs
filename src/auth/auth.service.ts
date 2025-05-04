@@ -35,7 +35,8 @@ export class AuthService {
             token:accessToken,
             user:user.id
         })
-        return {accessToken};
+        const {id,name,email,roles}=user;
+        return {accessToken,user:{id,name,email,roles}};
     }
 
     async isValidTokenWithUser(token:string){

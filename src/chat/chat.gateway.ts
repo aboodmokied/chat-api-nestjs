@@ -68,7 +68,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
             // update reciever chats in activeUserChats map
             this.updateConnectedUserChats(recieverId);
         }
-        this.server.to(chat.room).emit('newChat',{chatId:chat.id,users:[senderId,recieverId]});
+        this.server.to(chat.room).emit('newChat',{chat:chat});
     }
 
     // validate if the sender is a member in the chat
@@ -77,7 +77,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     async handlePrivateMessage(@ConnectedSocket() client:AuthorizedSoket,@MessageBody(new ValidationPipe({whitelist:true})) {chatId,message,recieverId}:SendMessageDto){
         const newMessage=await this.chatService.newMessage(chatId,message,client.userId,recieverId);
         const chat=await this.chatService.getChat(chatId);
-        this.server.to(chat!.room).emit('newMessage',{message:newMessage});
+        this.server.to(chat!.room).emit('newMessage',{message:newMessage,chat,recieverId});
     }
 
     
@@ -93,6 +93,14 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     async handleChatMessages(client:AuthorizedSoket,{chatId,page,limit}){
         const messages=await this.chatService.chatMessages(chatId,page,limit);
         this.server.to(client.id).emit('chatMessages',{chatId,messages});
+    }
+
+    // validate if the user is a member in the chat
+    @UseGuards(ChatMemberGuard(ChatGateway.connectedUserChats))
+    @SubscribeMessage('chatUsers')
+    async handleChatUsers(client:AuthorizedSoket,{chatId}){
+        const users=await this.chatService.getChatUsers(chatId);
+        this.server.to(client.id).emit('chatUsers',{users});
     }
 
     // // validate if the user is a member in the chat

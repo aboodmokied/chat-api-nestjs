@@ -17,8 +17,6 @@ export class Message extends Document {
     @Prop({default:Date.now(),index:-1})
     timestamp:Date 
     @Prop({default:false})
-    delivered:boolean 
-    @Prop({default:false})
     opened:boolean 
 };
 

@@ -11,7 +11,7 @@ export class ChatService {
 
     async joinChat(senderId:string,recieverID:string){
         const roomName=[senderId,recieverID].sort().join('_');
-        let chat=await this.chatModel.findOne({room:roomName});
+        let chat=await this.chatModel.findOne({room:roomName}).populate('users','id name email roles');
         if(!chat){
             chat=await this.chatModel.create({
                 room:roomName,
@@ -29,9 +29,12 @@ export class ChatService {
     async getChat(chatId:string){
         return this.chatModel.findById(chatId);
     }
+    async getChatUsers(chatId:string){
+        return this.chatModel.findById(chatId).populate('users','id name email roles').select('users');
+    }
 
     async userChats(userId:string){
-        return this.chatModel.find({users:userId}).populate('users','name email');
+        return this.chatModel.find({users:userId}).populate('users','id name email roles');
     }
     async userChatsIds(userId:string):Promise<string[]>{
         const chats=await this.chatModel.find({users:userId});
@@ -39,12 +42,15 @@ export class ChatService {
     }
 
     async newMessage(chatId:string,message:string,senderId:string,recieverId:string){
-        return this.messageModel.create({
+        const newMessage=await this.messageModel.create({
             content:message,
             chatId,
             sender:senderId,
             reciever:recieverId,
         })
+        return this.messageModel.findById(newMessage.id).populate('sender','id name email roles')
+        .populate('reciever','id name email roles');
+        
     }
     async chatMessages(chatId:string,page=1,limit=50){
         return this.messageModel.find({chatId,opened:false})
