@@ -2,11 +2,12 @@ import { ConnectedSocket, MessageBody, OnGatewayConnection, OnGatewayDisconnect,
 import { Server, Socket } from "socket.io";
 import { AuthorizedSoket } from "src/types";
 import { ChatService } from "./chat.service";
-import { UseFilters, UseGuards, ValidationPipe } from "@nestjs/common";
+import { BadRequestException, UseFilters, UseGuards, ValidationPipe } from "@nestjs/common";
 import { ChatMemberGuard } from "./guards/chat-member.guard";
 import { ChatOperationsDto, JoinChatDto, SendMessageDto } from "./dto/chat.dto";
 import { AllExceptionsFilter } from "src/filters/all-exceptions.filter";
 import { WsExceptionsFilter } from "src/filters/ws-exceptions.filter";
+import { User } from "src/schemas/User";
 
 
 @WebSocketGateway({
@@ -44,7 +45,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         client.join(userRooms); 
         this.server.emit('userConnected',`User Connected: ${client.id}`);
     }
-
+// 
     handleDisconnect(client: AuthorizedSoket) {
         this.activeUsers.delete(client.userId);
         ChatGateway.connectedUserChats.delete(client.userId);
@@ -53,22 +54,26 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     // join a room listener
     @SubscribeMessage('joinChat')
-    async handlePrivateChat(@ConnectedSocket() client:Socket,@MessageBody(new ValidationPipe({whitelist:true})) data:JoinChatDto){
-        const {senderId,recieverId}=data;
-        const chat=await this.chatService.joinChat(senderId,recieverId);
+    async handlePrivateChat(@ConnectedSocket() client:AuthorizedSoket,@MessageBody(new ValidationPipe({whitelist:true})) data:JoinChatDto){
+        const {recieverEmail}=data;
+        const result=await this.chatService.joinChat(client.userId,recieverEmail);
+        if(!result || !result.chat){
+            // return client.emit('error',{message:'Invalid Reciever Email'});
+            throw new BadRequestException(['Invalid Reciever Email']);
+        }
         // join the current user to this new chat
-        client.join(chat.room);
+        client.join(result.chat.room);
         // update sender chats in activeUserChats map
-        this.updateConnectedUserChats(senderId);
+        this.updateConnectedUserChats(client.userId);
         // get the second user socket if its connected (using recieverID), and join it to this chat
-        const recieverSocketId=this.activeUsers.get(recieverId);
+        const recieverSocketId=this.activeUsers.get(result.reciever.id);
         if(recieverSocketId){ // if the user active
             const recieverSocket=this.server.sockets.sockets.get(recieverSocketId);
-            recieverSocket?.join(chat.room);
+            recieverSocket?.join(result.chat.room);
             // update reciever chats in activeUserChats map
-            this.updateConnectedUserChats(recieverId);
+            this.updateConnectedUserChats(result.reciever.id);
         }
-        this.server.to(chat.room).emit('newChat',{chat:chat});
+        this.server.to(result.chat.room).emit('newChat',{chat:result.chat});
     }
 
     // validate if the sender is a member in the chat
@@ -103,14 +108,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         this.server.to(client.id).emit('chatUsers',{users});
     }
 
-    // // validate if the user is a member in the chat
-    // // this event should emited when user opens a specific chat 
-    // @UseGuards(ChatMemberGuard(ChatGateway.connectedUserChats))
-    // @SubscribeMessage('chatNewMessages')
-    // async handleChatNewMessages(client:AuthorizedSoket,{chatId,page,limit}){
-    //     const messages=await this.chatService.chatMessages(chatId,page,limit);
-    //     this.server.to(client.id).emit('chatMessages',{chatId,messages});
-    // }
 
     // validate if the user is a member in the chat
     @UseGuards(ChatMemberGuard(ChatGateway.connectedUserChats))

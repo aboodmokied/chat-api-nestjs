@@ -8,23 +8,32 @@ export class WsExceptionsFilter implements ExceptionFilter{
     catch(exception: any, host: ArgumentsHost) {
         let context:WsArgumentsHost=host.switchToWs();
         const client:Socket=context.getClient();
+        const data=context.getData();
         if(exception instanceof WsException){  // websocket exceptions
             context=host.switchToWs();
             const client:Socket=context.getClient();
             const message=exception.getError() || 'An Unknown Error Occurred'
             return client.emit('error',{
+                event: data?.event || 'unknown',
                 status:400,
                 message
             })
-        }else if(exception instanceof BadRequestException){  // Bad request exceptions
-            context=host.switchToWs();
-            const client:Socket=context.getClient();
-            const errorPayload=exception.getResponse() || 'An Unknown Error Occurred'
-            return client.emit('error',errorPayload)
+        }else if (exception instanceof BadRequestException) {
+            const errorResponse = exception.getResponse();
+            let message = 'Bad Request';
+            if (typeof errorResponse === 'object' && errorResponse !== null) {
+                message = (errorResponse as any).message || message;
+            }
+            return client.emit('validation_error', {
+                event: data?.event || 'unknown',
+                status: 400,
+                message,
+            });
         }else{
-            const status=400;
+            const status=500;
             const message=exception.message || 'Internal Server Error';
             return client.emit('error',{
+                event: data?.event || 'unknown',
                 status,
                 message
             })

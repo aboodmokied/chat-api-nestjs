@@ -1,6 +1,5 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { Request } from 'express';
 import { Roles } from 'src/roles/roles.enum';
 import { User } from 'src/schemas/User';
 import { UserService } from 'src/user/user.service';
@@ -35,8 +34,8 @@ export class AuthService {
             token:accessToken,
             user:user.id
         })
-        const {id,name,email,roles}=user;
-        return {accessToken,user:{id,name,email,roles}};
+        const {_id,name,email,roles}=user;
+        return {accessToken,user:{_id,name,email,roles}};
     }
 
     async isValidTokenWithUser(token:string){

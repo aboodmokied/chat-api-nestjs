@@ -26,7 +26,6 @@ const authorizeSocketMiddleware=(jwtService:JwtService)=>(client:AuthorizedSoket
         client.userId=payload.sub;
         return next();        
     } catch (error) {
-        console.log('Unauthorized Socket');
         next(new UnauthorizedException('Unauthorized Socket'))
     }
 };

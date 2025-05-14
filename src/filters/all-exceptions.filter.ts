@@ -6,7 +6,6 @@ import { Error as MongooseError } from "mongoose";
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter{
     catch(exception: any, host: ArgumentsHost) {
-        console.log(exception);
         let context:HttpArgumentsHost|WsArgumentsHost=host.switchToHttp();
         const response=context.getResponse<Response>();
         if(exception instanceof HttpException){  // http exceptions
@@ -14,7 +13,6 @@ export class AllExceptionsFilter implements ExceptionFilter{
             const errorPayload=exception.getResponse();
             return response.status(status).json(errorPayload);
         }else if(exception.code==11000){  // mongoose duplicated entry exeption
-            console.log(exception)
         const message='Duplicate Key Error: '+JSON.stringify(exception.keyValue);
             const status=400;
             return response.status(status).json({

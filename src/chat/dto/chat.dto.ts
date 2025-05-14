@@ -16,10 +16,7 @@ export class SendMessageDto{
 export class JoinChatDto{
     @IsString()
     @IsNotEmpty()
-    senderId:string
-    @IsString()
-    @IsNotEmpty()
-    recieverId:string
+    recieverEmail:string
 }
 
 export class ChatOperationsDto extends PickType(SendMessageDto,['chatId']){};

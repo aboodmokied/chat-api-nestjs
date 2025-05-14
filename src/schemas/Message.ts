@@ -14,7 +14,7 @@ export class Message extends Document {
     sender:string    
     @Prop({required:true,ref:User.name})
     reciever:string 
-    @Prop({default:Date.now(),index:-1})
+    @Prop({default:Date.now})
     timestamp:Date 
     @Prop({default:false})
     opened:boolean 
