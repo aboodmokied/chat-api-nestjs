@@ -30,8 +30,11 @@ export class UserService {
         const user = await this.userModel.create(createUserDto);
         const adminUser=await this.userModel.findOne({email:this.configService.get<string>('SUPER_ADMIN_EMAIL') || 'admin@gmail.com'})
         if(adminUser){
-            const {chatId}=await this.chatService.joinChat(adminUser.id,user.email);
-            await this.chatService.newMessage(chatId,`Welcome ${user.name}`,adminUser.id,user.id);
+           const result=await this.chatService.joinChat(adminUser.id,user.email);
+            if(result){
+                const {chatId}=result;
+                await this.chatService.newMessage(chatId,`Welcome ${user.name}`,adminUser.id,user.id);
+            }
         }
         return user;
     }
