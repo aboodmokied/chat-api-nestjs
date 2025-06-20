@@ -25,7 +25,7 @@ export class ChatService {
                 chat=await this.chatModel.findById(chat.id).populate('users','id name email roles');
             }
             const enrichedChat=extractChatName(chat,senderId);
-            return {chat:enrichedChat,reciever};
+            return {chat:enrichedChat,reciever,chatId:chat?.id};
         }
         return null;
     }

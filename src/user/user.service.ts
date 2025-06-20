@@ -5,10 +5,16 @@ import { User } from 'src/schemas/User';
 import { CreateUserDto } from './dto/create-user.dto';
 import * as bcrypt from 'bcryptjs';
 import { Roles } from 'src/roles/roles.enum';
+import { ChatService } from 'src/chat/chat.service';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class UserService {
-    constructor(@InjectModel(User.name) private userModel:Model<User>){}
+    constructor(
+        @InjectModel(User.name) private userModel:Model<User>,
+        private chatService:ChatService,
+        private configService:ConfigService
+    ){}
 
     async findAll():Promise<User[]>{
         return this.userModel.find().exec();
@@ -21,7 +27,13 @@ export class UserService {
             throw new BadRequestException(['email already used'])
         }
         createUserDto.password=await bcrypt.hash(createUserDto.password,10);
-        return this.userModel.create(createUserDto);
+        const user = await this.userModel.create(createUserDto);
+        const adminUser=await this.userModel.findOne({email:this.configService.get<string>('SUPER_ADMIN_EMAIL') || 'admin@gmail.com'})
+        if(adminUser){
+            const {chatId}=await this.chatService.joinChat(adminUser.id,user.email);
+            await this.chatService.newMessage(chatId,`Welcome ${user.name}`,adminUser.id,user.id);
+        }
+        return user;
     }
     async createAdminDirectly(createUserDto:CreateUserDto):Promise<User>{
         return this.userModel.create({...createUserDto,roles:[Roles.Admin]});

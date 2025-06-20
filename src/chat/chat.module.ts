@@ -11,5 +11,6 @@ import { ChatController } from './chat.controller';
     imports:[MongooseModule.forFeature([{name:Chat.name,schema:ChatSchema},{name:Message.name,schema:MessageSchema}]),UserModule],
     controllers:[ChatController],
     providers:[ChatGateway, ChatService],
+    export:[ChatService]
 })
 export class ChatModule {}
