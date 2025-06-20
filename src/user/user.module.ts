@@ -10,7 +10,7 @@ import { ChatModule } from 'src/chat/chat.module';
   imports:[
     AuthModule,MongooseModule.forFeature([{name:User.name,schema:UserSchema}]),
     forwardRef(() => AuthModule),
-    ChatModule
+    forwardRef(() => ChatModule)
   ],
   controllers: [UserController],
   providers: [UserService],
