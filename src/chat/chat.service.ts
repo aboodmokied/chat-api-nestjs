@@ -3,14 +3,14 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Chat } from 'src/schemas/Chat';
 import { Message } from 'src/schemas/Message';
-import { UserService } from 'src/user/user.service';
+import { User } from 'src/schemas/User';
 import { extractChatName } from 'src/utils/extaract-chat-name';
 
 @Injectable()
 export class ChatService {
-    constructor(@InjectModel(Chat.name) private chatModel:Model<Chat>,@InjectModel(Message.name) private messageModel:Model<Message>,private userSevice:UserService){}
+    constructor(@InjectModel(Chat.name) private chatModel:Model<Chat>,@InjectModel(Message.name) private messageModel:Model<Message>,@InjectModel(User.name) private userModel:Model<User>){}
     async joinChat(senderId:string,recieverEmail:string){
-        const reciever=await this.userSevice.findByEmail(recieverEmail);
+        const reciever=await this.userModel.findOne({email:recieverEmail});
         if(reciever?._id==senderId){
             return null;
         }
