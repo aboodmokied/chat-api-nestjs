@@ -8,7 +8,11 @@ async function bootstrap() {
   app.useWebSocketAdapter(new SocketIOAdapter(app));
   app.useGlobalFilters(new AllExceptionsFilter());
   // Enable CORS for all origins
-  app.enableCors();
+  app.enableCors({
+  origin: "*",
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  credentials: true,
+  });
   const PORT=process.env.PORT ?? 3000;
   app.listen(PORT).then(()=>{
     console.log('Server running on port:',PORT);
