@@ -1,9 +1,18 @@
 
 # 🗨️ NestJS Chat App
 
-A real-time chat application built with **NestJS** and **Socket.io**. This document provides all necessary information to interact with the server via REST APIs and Socket.io.
+A real-time chat application built with **NestJS** and **Socket.io**.
 
 ---
+## 🌐 Demo
+
+You can try the demo chat app (with react pages) here:
+
+💡 Hint: You can sign up with any fake email and password to test the chat functionality.
+
+https://chat-app-react-ebon.vercel.app
+---
+
 ## 🚀 Getting Started
 
 ```bash
@@ -14,12 +23,12 @@ npm install
 npm run start:dev
 ```
 
-Make sure you create a `.env` file with your environment variables like:
+Create a `.env` file with the following variables:
 
 ```
 PORT=3000
 
-DB_URI='yout-db-url/chat'
+DB_URI='your-db-url/chat'
 
 JWT_SECRET='my-secret'
 JWT_EXPIRATION='1d'
@@ -31,14 +40,16 @@ SUPER_ADMIN_PASSWORD='123456789'
 
 ---
 
-## 📡 REST API Overview
+## 📡 REST API Endpoints
 
 ### 🔐 Registration
 
 #### `POST /user`
-Registers a new user.
+
+Register a new user.
 
 **Example**
+
 ```json
 {
   "name": "abood",
@@ -46,10 +57,11 @@ Registers a new user.
   "password": "123456789"
 }
 ```
-#### `POST /admin-register`
-Make a request for register a new admin, the request approved by the super admin
 
-**Example**
+#### `POST /admin-register`
+
+Request to register a new admin, pending approval by the super admin.
+
 ```json
 {
   "name": "new admin",
@@ -59,19 +71,22 @@ Make a request for register a new admin, the request approved by the super admin
 ```
 
 ---
-### 🔐 Auth
-#### `POST /auth/login`
-Logs in an existing user and returns a JWT.
 
-**Example**
+### 🔐 Login
+
+#### `POST /auth/login`
+
+Login and receive a JWT token.
+
 ```json
 {
   "email": "abood@gmail.com",
-  "password": "132456789"
+  "password": "123456789"
 }
 ```
 
 **Response**
+
 ```json
 {
   "accessToken": "jwt-token"
@@ -83,90 +98,190 @@ Logs in an existing user and returns a JWT.
 ### 👤 User Info
 
 #### `GET /user/me`
-Fetch the currently authenticated user's info.
+
+Fetch the current authenticated user's information.
 
 **Headers**
+
 ```
 Authorization: Bearer <accessToken>
 ```
 
 **Response**
+
 ```json
 {
-    "_id": "67f6bba3113365ea3d696bdd",
-    "name": "abood",
-    "email": "abood@gmail.com",
-    "roles": [
-        "user"
-    ]
+  "_id": "67f6bba3113365ea3d696bdd",
+  "name": "abood",
+  "email": "abood@gmail.com",
+  "roles": ["user"]
 }
 ```
+
 ---
 
-## ⚡ Socket.IO Events
+## ⚡ Socket.IO
 
-> 🛡️ **Note:** To connect to the Socket.IO server, you must authorize yourself by including your JWT token.
+> 🛡️ **Note:** You must include a JWT token when connecting:
 >
-> Use either of the following approaches on the client side:
-> 
-> - `socket.io('http://localhost:3000', { auth: { token: '<accessToken>' } })`
-> - or send it in headers: `socket.io('http://localhost:3000', { transportOptions: { polling: { extraHeaders: { token: '<accessToken>' } } } })`
-> - if you use Postman: add token = "accessToken" into Headers
-> 
-> The server expects the token at either `handshake.auth.token` or `handshake.headers.token`.
+> * Using auth:
+>
+> ```js
+> io('https://chat-api-nestjs.onrender.com', {
+>   auth: { token: '<accessToken>' }
+> });
+> ```
+>
+> * Using headers:
+>
+> ```js
+> io('https://chat-api-nestjs.onrender.com', {
+>   transportOptions: {
+>     polling: {
+>       extraHeaders: { token: '<accessToken>' }
+>     }
+>   }
+> });
+> ```
 
+---
 
 ### ✅ Client → Server Events
 
-#### 🔌 `joinChat`
-User start a new chat with another user.
+#### `joinChat`
+
+Start a new chat.
 
 ```json
 {
-  "senderId": "senderId123",
-  "recieverId": "recieverId321",
+  "recieverEmail": "user2@example.com"
+}
+```
+
+**Response (event: `newChat`)**
+
+```json
+{
+  "chat": {
+    "_id": "chatId",
+    "room": "roomName",
+    "users": ["user1", "user2"]
+  }
 }
 ```
 
 ---
 
-#### 💬 `privateMessage`
-User send message to a chat.
-(the server will validate if the sender is a member in the chat)
-```json
-{
-  "message": "hello",
-  "chatId": "chatId222",
-  "recieverId": "recieverId123",
-}
-```
+#### `privateMessage`
 
----
+Send a message.
 
-#### 💬 `myChats`
-Returns the current user chats, return the chats by emit myChats event for the client with payload {chats:[...]}
-
----
-
-#### 💬 `chatMessages`
-For get chat messages, this will emit a client event => chatMessages with payload {chatId,messages}.
 ```json
 {
   "chatId": "chatId123",
-  "limit": 50,
-  "page": 1
+  "message": "Hello!",
+  "recieverId": "user2Id"
+}
+```
+
+**Response (event: `newMessage`)**
+
+```json
+{
+  "message": {
+    "_id": "messageId",
+    "chatId": "chatId123",
+    "sender": "user1Id",
+    "reciever": "user2Id",
+    "content": "Hello!",
+    "opened": false,
+    "timestamp": "2025-06-21T12:00:00.000Z"
+  },
+  "chat": {...},
+  "recieverId": "user2Id"
+}
+```
+
+---
+
+#### `myChats`
+
+Retrieve all user chats.
+
+```json
+{}
+```
+
+**Response**
+
+```json
+{
+  "chats": [ ... ]
+}
+```
+
+---
+
+#### `chatMessages`
+
+Get messages for a specific chat.
+
+```json
+{
+  "chatId": "chatId123",
+  "page": 1,
+  "limit": 50
+}
+```
+
+**Response**
+
+```json
+{
+  "chatId": "chatId123",
+  "messages": [ ... ]
+}
+```
+
+---
+
+#### `chatUsers`
+
+Get users in a specific chat.
+
+```json
+{
+  "chatId": "chatId123"
+}
+```
+
+**Response**
+
+```json
+{
+  "users": [ ... ]
 }
 ```
 
 ---
 
 #### `markAsOpenedMessage`
-When the user read message mark it as opened.
-(Validations: you should be a member in the chat and the reciever of this message)
+
+Mark a message as opened.
+
 ```json
 {
   "chatId": "chatId123",
-  "messageId" : "messageId321"
+  "messageId": "messageId321"
+}
+```
+
+**Response**
+
+```json
+{
+  "chatId": "chatId123",
+  "messageId": "messageId321"
 }
 ```
 
@@ -174,81 +289,67 @@ When the user read message mark it as opened.
 
 ### 📥 Server → Client Events
 
-#### 👋 `newChat`
-Triggered when a user starts a new chat with you.
+#### `newChat`
+
+Triggered when someone starts a chat with you.
 
 ```json
 {
-  "chatId" : "chatId123",
-  "users" : ["senderId","recieverId"]
+  "chat": { ... }
 }
 ```
 
----
+#### `newMessage`
 
-#### 📩 `userJoined`
-Triggered when a user sends new message for your chats.
+Triggered when a new message is received.
 
 ```json
 {
-  "message": {
-    "content" : "hello",
-    "chatId" : "chatId",
-    "sender" : "senderId",
-    "reciever" : "recieverId",
-    "timestamp" : "",
-    "opened" : false,
-  }
+  "message": { ... },
+  "chat": { ... },
+  "recieverId": "..."
 }
 ```
 
----
+#### `myChats`
 
-#### 🗨️ `myChats`
-Triggered as a response when you trigger myChats event.
+Response to `myChats` event.
 
 ```json
 {
-  "chats": [
-    {
-      "_id":"chatId",
-      "room":"roomName",
-      "users":[{"senderUser"},{"recieverUser"}]
-    }
-    ],
+  "chats": [ ... ]
 }
 ```
 
----
+#### `chatMessages`
 
-#### 🖊️ `chatMessages`
-Triggered as a response when you trigger chatMessages event.
+Response to `chatMessages` event.
 
 ```json
 {
-  "chatId": "chatId",
-  "messages":[
-    {
-    "content" : "hello",
-    "chatId" : "chatId",
-    "sender" : "senderId",
-    "reciever" : "recieverId",
-    "timestamp" : "",
-    "opened" : false,
-  }
-  ] 
+  "chatId": "...",
+  "messages": [ ... ]
 }
 ```
 
----
+#### `chatUsers`
 
-#### ✋ `messageOpened`
-Triggered when a reciever user read your message.
+Response to `chatUsers` event.
+
+```json
+{
+  "users": [ ... ]
+}
+```
+
+#### `messageOpened`
+
+Triggered when a user opens your message.
 
 ```json
 {
   "chatId": "chatId123",
-  "messageId": "messageId123"
+  "messageId": "messageId321"
 }
 ```
 
@@ -256,17 +357,10 @@ Triggered when a reciever user read your message.
 
 ## 🛠 Tech Stack
 
-- **NestJS** – Backend framework
-- **Socket.io** – Real-time communication
-- **MongoDB** – Data storage
-- **JWT** – Authentication
+* **NestJS** – Backend framework
+* **Socket.io** – Real-time communication
+* **MongoDB** – Database
+* **JWT** – Authentication
 
 ---
 
----
-
-## 🌐 Deployment
-App already deployed,
-Try it : https://chat-api-nestjs.onrender.com
-
----
